@@ -111,10 +111,11 @@ public class CovidFullTextCollection extends DocumentCollection<CovidFullTextCol
       String fullTextJson = getFullTextJson(CovidFullTextCollection.this.path.toString());
       if (fullTextJson != null) {
         content += fullTextJson.isEmpty() ? "" : "\n " + fullTextJson;
-        raw = fullTextJson;
+        content = content.replace("-","_");
+        raw = fullTextJson.replace("-","_");
       } else {
         String recordJson = getRecordJson();
-        raw = recordJson == null ? "" : recordJson;
+        raw = recordJson == null ? "" : recordJson.replace("-","_");
       }
     }
   }

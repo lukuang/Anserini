@@ -133,9 +133,9 @@ public class CovidParagraphCollection extends DocumentCollection<CovidParagraphC
     public Document(CSVRecord record, String bodyText, String recordFullText) {
       id = record.get("cord_uid");
 
-      content = bodyText;
+      bodyText = bodyText.replace("-","_");
 
-      this.raw = recordFullText;
+      this.raw = recordFullText.replace("-","_");
       this.record = record;
     }
   }
