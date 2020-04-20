@@ -77,18 +77,9 @@ public class CovidParagraphCollection extends DocumentCollection<CovidParagraphC
 
     @Override
     public void readNext() throws NoSuchElementException {
-      if (paragraphIterator != null && paragraphIterator.hasNext()) {
-        // if the record contains more paragraphs, we parse them
-        String paragraph = paragraphIterator.next().get("text").asText();
-        paragraphNumber += 1;
-        bufferedRecord = new CovidParagraphCollection.Document(record, paragraph, paragraphNumber);
-      } else if (iterator.hasNext()) {
-        // if CSV contains more lines, we parse the next record
+      String fullTextPath = null;
+      while(fullTextPath == null && iterator.hasNext()){
         record = iterator.next();
-        String recordFullText = "";
-
-        // get paragraphs from full text file
-        String fullTextPath = null;
         if (record.get("has_pmc_xml_parse").contains("True")) {
           fullTextPath = "/" + record.get("full_text_file") + "/pmc_json/" +
           record.get("pmcid") + ".xml.json";
@@ -97,28 +88,30 @@ public class CovidParagraphCollection extends DocumentCollection<CovidParagraphC
           fullTextPath = "/" + record.get("full_text_file") + "/pdf_json/" +
             hashes[hashes.length - 1].strip() + ".json";
         }
+      }
 
-        if (fullTextPath != null){
-          try {
-            String recordFullTextPath = CovidParagraphCollection.this.path.toString() + fullTextPath;
-            recordFullText = new String(Files.readAllBytes(Paths.get(recordFullTextPath)));
-            FileReader recordFullTextFileReader = new FileReader(recordFullTextPath);
-            ObjectMapper mapper = new ObjectMapper();
-            JsonNode recordJsonNode = mapper.readerFor(JsonNode.class).readTree(recordFullTextFileReader);
-            paragraphIterator = recordJsonNode.get("body_text").elements();
-          } catch (IOException e) {
-            LOG.error("Error parsing file at " + fullTextPath + "\n" + e.getMessage());
-          }
-        } else {
-          paragraphIterator = null;
+      if (fullTextPath != null){
+        String recordFullText = "";
+        try {
+          String recordFullTextPath = CovidParagraphCollection.this.path.toString() + fullTextPath;
+          recordFullText = new String(Files.readAllBytes(Paths.get(recordFullTextPath)));
+          FileReader recordFullTextFileReader = new FileReader(recordFullTextPath);
+          ObjectMapper mapper = new ObjectMapper();
+          JsonNode recordJsonNode = mapper.readerFor(JsonNode.class).readTree(recordFullTextFileReader);
+          paragraphIterator = recordJsonNode.get("body_text").elements();
+        } catch (IOException e) {
+          LOG.error("Error parsing file at " + fullTextPath + "\n" + e.getMessage());
         }
-
-        paragraphNumber = 0;
-        bufferedRecord = new CovidParagraphCollection.Document(record, recordFullText);
-    } else {
-      throw new NoSuchElementException("Reached end of CSVRecord Entries Iterator");
+        String bodyText = "";
+        while(paragraphIterator != null && paragraphIterator.hasNext()){
+          String paragraph = paragraphIterator.next().get("text").asText();
+          bodyText += paragraph.isEmpty() ? "" : "\n" + paragraph;
+        }
+        bufferedRecord = new CovidParagraphCollection.Document(record, bodyText, recordFullText);
+      } else {
+        throw new NoSuchElementException("Reached end of CSVRecord Entries Iterator");
+      }
     }
-  }
 
     @Override
     public void close() {
@@ -137,27 +130,13 @@ public class CovidParagraphCollection extends DocumentCollection<CovidParagraphC
    * A document in a CORD-19 collection.
    */
   public class Document extends CovidCollectionDocument {
-    public Document(CSVRecord record, String paragraph, Integer paragraphNumber, String recordFullText) {
-      if (paragraphNumber == 0) {
-        id = record.get("cord_uid");
-      } else {
-        id = record.get("cord_uid") + "." + String.format("%05d", paragraphNumber);
-      }
+    public Document(CSVRecord record, String bodyText, String recordFullText) {
+      id = record.get("cord_uid");
 
-      content = record.get("title").replace("\n", " ");
-      content += record.get("abstract").isEmpty() ? "" : "\n" + record.get("abstract");
-      content += paragraph.isEmpty() ? "" : "\n" + paragraph;
+      content = bodyText;
 
       this.raw = recordFullText;
       this.record = record;
-    }
-
-    public Document(CSVRecord record, String paragraph, Integer paragraphNumber) {
-      this(record, paragraph, paragraphNumber, "");
-    }
-
-    public Document(CSVRecord record, String recordFullText) {
-      this(record, "", 0, recordFullText);
     }
   }
 }

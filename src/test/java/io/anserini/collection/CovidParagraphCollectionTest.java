@@ -35,21 +35,21 @@ public class CovidParagraphCollectionTest extends DocumentCollectionTest<CovidPa
     Path segment = Paths.get("src/test/resources/sample_docs/covid/sample1/metadata.csv");
 
     segmentPaths.add(segment);
-    segmentDocCounts.put(segment, 42);
+    segmentDocCounts.put(segment, 1);
 
     totalSegments = 1;
-    totalDocs = 42;
+    totalDocs = 1;
 
     HashMap<String, String> doc1 = new HashMap<>();
     doc1.put("id", "xqhn0vbp");
     expected.put("xqhn0vbp", doc1);
 
-    for (int i=1; i<totalDocs; i++) {
-      String id = String.format("xqhn0vbp.%05d", i);
-      HashMap<String, String> doc = new HashMap<>();
-      doc.put("id", id);
-      expected.put(id, doc);
-    }
+    // for (int i=1; i<totalDocs; i++) {
+    //   String id = String.format("xqhn0vbp.%05d", i);
+    //   HashMap<String, String> doc = new HashMap<>();
+    //   doc.put("id", id);
+    //   expected.put(id, doc);
+    // }
     //"xqhn0vbp.00001"
 
   }
