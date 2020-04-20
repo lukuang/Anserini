@@ -38,17 +38,17 @@ public class CovidTopicReaderTest {
 
     assertEquals(1, (int) topics.firstKey());
     assertEquals("coronavirus origin", topics.get(topics.firstKey()).get("query"));
-    assertEquals("what is the origin of COVID-19", topics.get(topics.firstKey()).get("question"));
-    assertEquals("seeking range of information about the SARS-CoV-2 virus's origin, " +
+    assertEquals("what is the origin of COVID_19", topics.get(topics.firstKey()).get("question"));
+    assertEquals("seeking range of information about the SARS_CoV_2 virus's origin, " +
         "including its evolution, animal source, and first transmission into humans",
         topics.get(topics.firstKey()).get("narrative"));
 
     assertEquals(30, (int) topics.lastKey());
     assertEquals("coronavirus remdesivir", topics.get(topics.lastKey()).get("query"));
-    assertEquals("is remdesivir an effective treatment for COVID-19",
+    assertEquals("is remdesivir an effective treatment for COVID_19",
         topics.get(topics.lastKey()).get("question"));
     assertEquals(
-        "seeking specific information on clinical outcomes in COVID-19 patients treated with remdesivir",
+        "seeking specific information on clinical outcomes in COVID_19 patients treated with remdesivir",
         topics.get(topics.lastKey()).get("narrative"));
   }
 }

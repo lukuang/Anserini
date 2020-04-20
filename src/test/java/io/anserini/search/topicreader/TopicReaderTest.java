@@ -587,15 +587,15 @@ public class TopicReaderTest {
     assertEquals(30, topics.keySet().size());
 
     assertEquals("coronavirus origin", topics.get(1).get("query"));
-    assertEquals("what is the origin of COVID-19", topics.get(1).get("question"));
-    assertEquals("seeking range of information about the SARS-CoV-2 virus's origin, " +
+    assertEquals("what is the origin of COVID_19", topics.get(1).get("question"));
+    assertEquals("seeking range of information about the SARS_CoV_2 virus's origin, " +
             "including its evolution, animal source, and first transmission into humans",
         topics.get(1).get("narrative"));
 
     assertEquals("coronavirus remdesivir", topics.get(30).get("query"));
-    assertEquals("is remdesivir an effective treatment for COVID-19", topics.get(30).get("question"));
+    assertEquals("is remdesivir an effective treatment for COVID_19", topics.get(30).get("question"));
     assertEquals(
-        "seeking specific information on clinical outcomes in COVID-19 patients treated with remdesivir",
+        "seeking specific information on clinical outcomes in COVID_19 patients treated with remdesivir",
         topics.get(30).get("narrative"));
   }
 
@@ -608,15 +608,15 @@ public class TopicReaderTest {
     assertEquals(30, topics.keySet().size());
 
     assertEquals("coronavirus origin", topics.get("1").get("query"));
-    assertEquals("what is the origin of COVID-19", topics.get("1").get("question"));
-    assertEquals("seeking range of information about the SARS-CoV-2 virus's origin, " +
+    assertEquals("what is the origin of COVID_19", topics.get("1").get("question"));
+    assertEquals("seeking range of information about the SARS_CoV_2 virus's origin, " +
             "including its evolution, animal source, and first transmission into humans",
         topics.get("1").get("narrative"));
 
     assertEquals("coronavirus remdesivir", topics.get("30").get("query"));
-    assertEquals("is remdesivir an effective treatment for COVID-19", topics.get("30").get("question"));
+    assertEquals("is remdesivir an effective treatment for COVID_19", topics.get("30").get("question"));
     assertEquals(
-        "seeking specific information on clinical outcomes in COVID-19 patients treated with remdesivir",
+        "seeking specific information on clinical outcomes in COVID_19 patients treated with remdesivir",
         topics.get("30").get("narrative"));
   }
 
