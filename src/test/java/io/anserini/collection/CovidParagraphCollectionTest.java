@@ -42,22 +42,18 @@ public class CovidParagraphCollectionTest extends DocumentCollectionTest<CovidPa
 
     HashMap<String, String> doc1 = new HashMap<>();
     doc1.put("id", "xqhn0vbp");
+    doc1.put("contents_starts_with", "Rhinoviruses have been associated with 40% to 65%");
+    doc1.put("contents_ends_with", "The pre_publication history for this paper can be accessed here:");
+    doc1.put("contents_length", "21029");
     expected.put("xqhn0vbp", doc1);
-
-    // for (int i=1; i<totalDocs; i++) {
-    //   String id = String.format("xqhn0vbp.%05d", i);
-    //   HashMap<String, String> doc = new HashMap<>();
-    //   doc.put("id", id);
-    //   expected.put(id, doc);
-    // }
-    //"xqhn0vbp.00001"
-
   }
 
   @Override
   void checkDocument(SourceDocument doc, Map<String, String> expected) {
     CovidParagraphCollection.Document covidDoc = (CovidParagraphCollection.Document) doc;
-
     assertEquals(expected.get("id"), covidDoc.id());
+    assertTrue(covidDoc.contents().startsWith(expected.get("contents_starts_with")));
+    assertTrue(covidDoc.contents().endsWith(expected.get("contents_ends_with")));
+    assertEquals(Integer.parseInt(expected.get("contents_length")), covidDoc.contents().length());
   }
 }

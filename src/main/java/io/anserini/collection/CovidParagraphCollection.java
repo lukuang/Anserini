@@ -103,9 +103,15 @@ public class CovidParagraphCollection extends DocumentCollection<CovidParagraphC
           LOG.error("Error parsing file at " + fullTextPath + "\n" + e.getMessage());
         }
         String bodyText = "";
+        Boolean first = true;
         while(paragraphIterator != null && paragraphIterator.hasNext()){
           String paragraph = paragraphIterator.next().get("text").asText();
-          bodyText += paragraph.isEmpty() ? "" : "\n" + paragraph;
+          if (first){
+            first = false;
+            bodyText += paragraph.isEmpty() ? "" : paragraph;
+          } else{
+            bodyText += paragraph.isEmpty() ? "" : "\n" + paragraph;
+          }
         }
         bufferedRecord = new CovidParagraphCollection.Document(record, bodyText, recordFullText);
       } else {
@@ -133,7 +139,7 @@ public class CovidParagraphCollection extends DocumentCollection<CovidParagraphC
     public Document(CSVRecord record, String bodyText, String recordFullText) {
       id = record.get("cord_uid");
 
-      bodyText = bodyText.replace("-","_");
+      content = bodyText.replace("-","_");
 
       this.raw = recordFullText.replace("-","_");
       this.record = record;

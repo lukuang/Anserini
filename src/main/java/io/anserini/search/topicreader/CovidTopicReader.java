@@ -64,7 +64,6 @@ public class CovidTopicReader extends TopicReader<Integer> {
 
       topic.put("query", cur.getElementsByTagName("query").item(0).getTextContent().replace("-", "_").trim());
       topic.put("question", cur.getElementsByTagName("question").item(0).getTextContent().replace("-", "_").trim());
-      System.out.print(cur.getElementsByTagName("question").item(0).getTextContent().replace("-", "_").trim());
       topic.put("narrative", cur.getElementsByTagName("narrative").item(0).getTextContent().replace("-", "_").trim());
 
       map.put(Integer.parseInt(cur.getAttributes().getNamedItem("number").getNodeValue()), topic);
