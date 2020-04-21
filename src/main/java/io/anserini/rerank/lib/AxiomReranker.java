@@ -473,12 +473,13 @@ public class AxiomReranker<T> implements Reranker<T> {
         PriorityQueue<Pair<String, Double>> termScorePQ = new PriorityQueue<>(new ScoreComparator());
         double selfMI = computeMutualInformation(termInvertedList.get(queryTerm), termInvertedList.get(queryTerm), docIdsCount);
         for (Map.Entry<String, Set<Integer>> termEntry : termInvertedList.entrySet()) {
-          if (queryTerms.contains(termEntry.getKey())){
-            //skip query terms
-            continue;
+          double score;
+          if (termEntry.getKey().equals(queryTerm)) { // The mutual information to itself will always be 1
+            score = idf * qtf;
+          } else {
+            double crossMI = computeMutualInformation(termInvertedList.get(queryTerm), termEntry.getValue(), docIdsCount);
+            score = idf * beta * qtf * crossMI / selfMI;
           }
-          double crossMI = computeMutualInformation(termInvertedList.get(queryTerm), termEntry.getValue(), docIdsCount);
-          double score = beta * qtf * crossMI / selfMI;
           termScorePQ.add(Pair.of(termEntry.getKey(), score));
         }
         allTermScoresPQ.add(termScorePQ);
