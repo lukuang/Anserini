@@ -154,10 +154,10 @@ public class AxiomReranker<T> implements Reranker<T> {
       Map<String, Double> expandedTermScores = computeTermScore(termInvertedList, context);
 
       BooleanQuery.Builder nqBuilder = new BooleanQuery.Builder();
+      nqBuilder.add(new TermQuery(new Term(this.field, context.getQueryText())), BooleanClause.Occur.SHOULD);
 
       if (expandedTermScores.isEmpty()) {
         LOG.info("[Empty Expanded Query]: " + context.getQueryTokens());
-        nqBuilder.add(new TermQuery(new Term(this.field, context.getQueryText())), BooleanClause.Occur.SHOULD);
       } else {
         for (Map.Entry<String, Double> termScore : expandedTermScores.entrySet()) {
           String term = termScore.getKey();
@@ -467,15 +467,15 @@ public class AxiomReranker<T> implements Reranker<T> {
       if (df == 0L) {
         continue;
       }
-      float idf = (float) Math.log((1 + docCount)/df);
+      float idf = (float) Math.pow((1 + docCount)/df, 0.5);
       int qtf = q.getValue();
       if (termInvertedList.containsKey(queryTerm)) {
         PriorityQueue<Pair<String, Double>> termScorePQ = new PriorityQueue<>(new ScoreComparator());
         double selfMI = computeMutualInformation(termInvertedList.get(queryTerm), termInvertedList.get(queryTerm), docIdsCount);
         for (Map.Entry<String, Set<Integer>> termEntry : termInvertedList.entrySet()) {
           double score;
-          if (termEntry.getKey().equals(queryTerm)) { // The mutual information to itself will always be 1
-            score = idf * qtf;
+          if (queryTerms.contains(termEntry.getKey())) { // ignore query terms
+            continue;
           } else {
             double crossMI = computeMutualInformation(termInvertedList.get(queryTerm), termEntry.getValue(), docIdsCount);
             score = idf * beta * qtf * crossMI / selfMI;
