@@ -16,6 +16,8 @@
 
 package io.anserini.collection;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
@@ -24,6 +26,7 @@ import org.apache.logging.log4j.Logger;
 
 import java.io.BufferedReader;
 import java.io.FileInputStream;
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.file.Path;
@@ -106,17 +109,49 @@ public class CovidFullTextCollection extends DocumentCollection<CovidFullTextCol
       id = record.get("cord_uid");
       content = record.get("title").replace("\n", " ");
       content += record.get("abstract").isEmpty() ? "" : "\n" + record.get("abstract");
-      this.record = record;
 
-      String fullTextJson = getFullTextJson(CovidFullTextCollection.this.path.toString());
-      if (fullTextJson != null) {
-        content += fullTextJson.isEmpty() ? "" : "\n " + fullTextJson;
-        content = content.replace("-","_");
-        raw = fullTextJson.replace("-","_");
-      } else {
-        String recordJson = getRecordJson();
-        raw = recordJson == null ? "" : recordJson.replace("-","_");
+      String bodyText = getBodyText(CovidFullTextCollection.this.path.toString(), record);
+      content += bodyText.isEmpty() ? "" : "\n " + bodyText;
+      
+      content = content.replace("-","_");
+      raw = content;
+      this.record = record;
+    }
+  }
+
+  protected final String getBodyText(String basePath, CSVRecord record) {
+    String bodyText = "";
+    String fullTextPath = null;
+    if (record.get("has_pmc_xml_parse").contains("True")) {
+      fullTextPath = basePath + "/" + record.get("full_text_file") + "/pmc_json/" +
+      record.get("pmcid") + ".xml.json";
+    } else if (record.get("has_pdf_parse").contains("True")) {
+      String[] hashes = record.get("sha").split(";");
+      fullTextPath = basePath + "/" + record.get("full_text_file") + "/pdf_json/" +
+        hashes[hashes.length - 1].strip() + ".json";
+    } else {
+      return bodyText;
+    }
+
+    Iterator<JsonNode> paragraphIterator = null; // iterator for paragraphs in a CSV record
+    try {
+      FileReader recordFullTextFileReader = new FileReader(fullTextPath);
+      ObjectMapper mapper = new ObjectMapper();
+      JsonNode recordJsonNode = mapper.readerFor(JsonNode.class).readTree(recordFullTextFileReader);
+      paragraphIterator = recordJsonNode.get("body_text").elements();
+    } catch (IOException e) {
+      LOG.error("Error parsing file at " + fullTextPath + "\n" + e.getMessage());
+    }
+    Boolean first = true;
+    while(paragraphIterator != null && paragraphIterator.hasNext()){
+      String paragraph = paragraphIterator.next().get("text").asText();
+      if (first){
+        first = false;
+        bodyText += paragraph.isEmpty() ? "" : paragraph;
+      } else{
+        bodyText += paragraph.isEmpty() ? "" : "\n" + paragraph;
       }
     }
+    return bodyText;
   }
 }
