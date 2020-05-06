@@ -276,6 +276,9 @@ public class SearchArgs {
       "by running CLI command `IndexUtils -index /path/to/index -dumpAllDocids GZ`")
   public String axiom_docids = null;
 
+  @Option(name = "-axiom.rf_doc_path", usage = "json file of relevant documents and their relevant scores")
+  public String axiom_rf_doc_path = null;
+
   @Option(name = "-axiom.r", handler = StringArrayOptionHandler.class, usage = "parameter R in axiomatic reranking")
   public String[] axiom_r = new String[]{"20"};
 

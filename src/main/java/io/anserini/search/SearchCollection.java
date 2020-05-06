@@ -350,7 +350,7 @@ public final class SearchCollection implements Closeable {
                 cascade.add(new AxiomReranker(args.index, args.axiom_index, IndexArgs.CONTENTS,
                     args.axiom_deterministic, Integer.valueOf(seed), Integer.valueOf(r),
                     Integer.valueOf(n), Float.valueOf(beta), Integer.valueOf(top),
-                    args.axiom_docids, args.axiom_outputQuery, args.searchtweets));
+                    args.axiom_docids, args.axiom_rf_doc_path, args.axiom_outputQuery, args.searchtweets));
                 cascade.add(new ScoreTiesAdjusterReranker());
                 cascades.add(cascade);
               }

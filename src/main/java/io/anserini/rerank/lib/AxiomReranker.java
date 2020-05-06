@@ -45,6 +45,8 @@ import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.search.TopDocs;
 import org.apache.lucene.store.FSDirectory;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -54,6 +56,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
+import java.util.Iterator;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -96,6 +99,7 @@ public class AxiomReranker<T> implements Reranker<T> {
   public static List<String> externalDocidsCache; // When enabling the deterministic reranking we can opt to read sorted docids
                                               // from a file. The file can be obtained by running
                                               // `IndexUtils -index /path/to/index -dumpAllDocids GZ`
+  public static String rfDocPath; 
 
   private final int R; // number of top documents in initial results
   private final int N; // factor that used in extracting random documents, we will extract (N-1)*R randomly select documents
@@ -106,7 +110,7 @@ public class AxiomReranker<T> implements Reranker<T> {
   private final boolean searchTweets;
 
   public AxiomReranker(String originalIndexPath, String externalIndexPath, String field, boolean deterministic,
-                       long seed, int r, int n, float beta, int top, String docidsCachePath,
+                       long seed, int r, int n, float beta, int top, String docidsCachePath,  String rfDocPath, 
                        boolean outputQuery, boolean searchTweets) throws IOException {
     this.field = field;
     this.deterministic = deterministic;
@@ -117,6 +121,7 @@ public class AxiomReranker<T> implements Reranker<T> {
     this.beta = beta;
     this.originalIndexPath = originalIndexPath;
     this.externalIndexPath = externalIndexPath;
+    this.rfDocPath = rfDocPath;
     this.outputQuery = outputQuery;
     this.searchTweets = searchTweets;
 
@@ -296,6 +301,39 @@ public class AxiomReranker<T> implements Reranker<T> {
     }
   }
 
+  private Set<Integer> readRfDocs(RerankerContext<T> context){
+    Set<Integer> rfDocidSet = new HashSet<>();;
+    String rfDocsJson = null;
+    String queryRfDocPath = this.rfDocPath + "/" + context.getQueryId().toString();
+    try {
+      rfDocsJson = new String(
+        Files.readAllBytes(
+          Paths.get(queryRfDocPath)
+        )
+      );
+    } catch (IOException e) {
+      LOG.error("Error parsing rf doc file at " + queryRfDocPath);
+    }
+
+    IndexSearcher searcher = context.getIndexSearcher();
+    IndexReader reader = searcher.getIndexReader();
+
+    try {
+      ObjectMapper mapper = new ObjectMapper();
+      JsonNode rfDocJsonNode = mapper.readerFor(JsonNode.class).readTree(rfDocsJson);
+      Iterator<JsonNode> docidIterator = rfDocJsonNode.elements();
+      while (docidIterator.hasNext() && rfDocidSet.size() < this.R ) {
+        JsonNode node = docidIterator.next();
+        String docid = "\n" + node.asText();
+        Query q = new TermQuery(new Term(IndexArgs.ID, docid));
+        TopDocs rs = searcher.search(q, 1);
+        rfDocidSet.add(rs.scoreDocs[0].doc);
+      }
+    } catch (IOException e) {
+      LOG.error("Error parsing file at " + queryRfDocPath + "\n" + e.getMessage());
+    }
+    return rfDocidSet;
+  }
   /**
    * Select {@code R*N} docs from the ranking results and the index as the reranking pool.
    * The process is:
@@ -308,7 +346,8 @@ public class AxiomReranker<T> implements Reranker<T> {
    */
   private Set<Integer> selectDocs(ScoredDocuments docs, RerankerContext<T> context)
     throws IOException {
-    Set<Integer> docidSet = new HashSet<>(Arrays.asList(ArrayUtils.toObject(
+    Set<Integer> docidSet = new HashSet<>();
+    docidSet = new HashSet<>(Arrays.asList(ArrayUtils.toObject(
       Arrays.copyOfRange(docs.ids, 0, Math.min(this.R, docs.ids.length)))));
     long targetSize = this.R * this.N;
 
