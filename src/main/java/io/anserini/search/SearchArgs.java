@@ -171,7 +171,7 @@ public class SearchArgs {
       usage = "use F2Exp scoring model")
   public boolean f2exp = false;
 
-  @Option(name = "-f2exp.s", metaVar = "[value]", usage = "F2Exp s parameter")
+  @Option(name = "-f2exp.s", handler = StringArrayOptionHandler.class, usage = "F2Exp s parameter")
   public String[] f2exp_s = new String[]{"0.5"};
 
   @Option(name = "-f2log",
@@ -179,7 +179,7 @@ public class SearchArgs {
       usage = "use F2Log scoring model")
   public boolean f2log = false;
 
-  @Option(name = "-f2log.s", metaVar = "[value]", usage = "F2Log s parameter")
+  @Option(name = "-f2log.s", handler = StringArrayOptionHandler.class, usage = "F2Log s parameter")
   public String[] f2log_s = new String[]{"0.5"};
 
   @Option(name = "-sdm", usage = "boolean switch to use Sequential Dependence Model query")
