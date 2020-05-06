@@ -1,0 +1,15 @@
+# index generation
+sh target/appassembler/bin/IndexCollection \
+  -collection Cord19AbstractCollection -generator Cord19Generator  \
+  -threads 8 -input /m/infochain/lukuang/CORD-19/data/covid-2020-05-01 \
+  -index /m/infochain/lukuang/shared_for_round2/anserini/index/title+abstract \
+  -storePositions -storeDocvectors -storeContents -storeRaw > log.covid-2020-05-10.title+abstract.txt
+
+#get initial retrieval results with the best parameters for round1
+target/appassembler/bin/SearchCollection -index index/title+abstract \
+ -topicreader Covid -topics src/main/resources/topics-and-qrels/topics.covid-round2-udel.xml \
+ -topicfield query -f2exp -f2exp.s 0.8 -axiom -axiom.deterministic -axiom.top 10 -axiom.beta 0.7 \
+ -hits 1400 -output runs/initial_results
+
+# evaluate based on round1 qrels
+ eval/trec_eval.9.0.4/trec_eval -m ndcg_cut.10 src/main/resources/topics-and-qrels/qrels.covid-round1.txt runs/initial_results
