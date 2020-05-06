@@ -315,17 +315,13 @@ public class AxiomReranker<T> implements Reranker<T> {
       Query q = new TermQuery(new Term(IndexArgs.ID, docid));
       TopDocs rs = searcher.search(q, 1);
       rfDocidSet.add(rs.scoreDocs[0].doc);
-      if (rfDocidSet.size() >= this.R){
-        break;
-      }
+      // if (rfDocidSet.size() >= this.R){
+      //   break;
+      // }
     }
 
-    // print fb documents 
-    String fbDocidString = "";
-    for (String docid : addedRfDocids){
-      fbDocidString += " " + docid;
-    }
-    LOG.info("expand " + context.getQueryId() + " with " + fbDocidString);
+    // debug info
+    LOG.info("expand " + context.getQueryId() + " with " + addedRfDocids.size() + " documents");
     return rfDocidSet;
   }
 
@@ -342,14 +338,16 @@ public class AxiomReranker<T> implements Reranker<T> {
   private Set<Integer> selectDocs(ScoredDocuments docs, RerankerContext<T> context)
     throws IOException {
     Set<Integer> docidSet = null;
+    long targetSize = 0;
     if (this.rfDocPath == null){
       docidSet = new HashSet<>(Arrays.asList(ArrayUtils.toObject(
         Arrays.copyOfRange(docs.ids, 0, Math.min(this.R, docs.ids.length)))));
+        targetSize = this.R * this.N;
     } else {
       docidSet = readRfDocs(context);
+       targetSize = docidSet.size() * this.N;
     }
 
-    long targetSize = this.R * this.N;
 
     if (docidSet.size() < targetSize) {
       IndexReader reader;
