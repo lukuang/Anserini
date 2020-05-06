@@ -304,7 +304,7 @@ public class AxiomReranker<T> implements Reranker<T> {
   private Set<Integer> readRfDocs(RerankerContext<T> context){
     Set<Integer> rfDocidSet = new HashSet<>();;
     String rfDocsJson = null;
-    String queryRfDocPath = this.rfDocPath + "/" + context.getQueryId().toString();
+    String queryRfDocPath = this.rfDocPath + "/" + context.getQueryId() + ".json";
     try {
       rfDocsJson = new String(
         Files.readAllBytes(
