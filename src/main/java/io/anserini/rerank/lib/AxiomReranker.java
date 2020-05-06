@@ -154,10 +154,13 @@ public class AxiomReranker<T> implements Reranker<T> {
       Map<String, Double> expandedTermScores = computeTermScore(termInvertedList, context);
 
       BooleanQuery.Builder nqBuilder = new BooleanQuery.Builder();
+      List<String> queryTerms = context.getQueryTokens();
+      for (String qt : queryTerms) {
+        nqBuilder.add(new TermQuery(new Term(this.field, qt)), BooleanClause.Occur.SHOULD);
+      }
 
       if (expandedTermScores.isEmpty()) {
         LOG.info("[Empty Expanded Query]: " + context.getQueryTokens());
-        nqBuilder.add(new TermQuery(new Term(this.field, context.getQueryText())), BooleanClause.Occur.SHOULD);
       } else {
         for (Map.Entry<String, Double> termScore : expandedTermScores.entrySet()) {
           String term = termScore.getKey();
@@ -467,6 +470,7 @@ public class AxiomReranker<T> implements Reranker<T> {
       if (df == 0L) {
         continue;
       }
+      // float idf = (float) Math.pow((1 + docCount)/df, 0.5);
       float idf = (float) Math.log((1 + docCount)/df);
       int qtf = q.getValue();
       if (termInvertedList.containsKey(queryTerm)) {
@@ -474,8 +478,8 @@ public class AxiomReranker<T> implements Reranker<T> {
         double selfMI = computeMutualInformation(termInvertedList.get(queryTerm), termInvertedList.get(queryTerm), docIdsCount);
         for (Map.Entry<String, Set<Integer>> termEntry : termInvertedList.entrySet()) {
           double score;
-          if (termEntry.getKey().equals(queryTerm)) { // The mutual information to itself will always be 1
-            score = idf * qtf;
+          if (termEntry.getKey().equals(queryTerm)) { 
+            continue;
           } else {
             double crossMI = computeMutualInformation(termInvertedList.get(queryTerm), termEntry.getValue(), docIdsCount);
             score = idf * beta * qtf * crossMI / selfMI;
@@ -529,7 +533,7 @@ public class AxiomReranker<T> implements Reranker<T> {
     Set<Integer> docidsXClone = new HashSet<>(docidsX); // directly operate on docidsX will change it permanently
     docidsXClone.retainAll(docidsY);
     int numXY11 = docidsXClone.size();
-    int numXY10 = numXY10 = x1 - numXY11;    //doc num that x occurs but y doesn't
+    int numXY10 = x1 - numXY11;    //doc num that x occurs but y doesn't
     int numXY01 = y1 - numXY11;    // doc num that y occurs but x doesn't
     int numXY00 = totalDocCount - numXY11 - numXY10 - numXY01; //doc num that neither x nor y occurs
 
