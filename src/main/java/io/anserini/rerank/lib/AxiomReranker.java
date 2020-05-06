@@ -308,8 +308,10 @@ public class AxiomReranker<T> implements Reranker<T> {
 
     IndexSearcher searcher = context.getIndexSearcher();
     IndexReader reader = searcher.getIndexReader();
+    List<String> addedRfDocids = new ArrayList<String>();
 
     for (String docid : rfExternalDocidCache) {
+      addedRfDocids.add(docid);
       Query q = new TermQuery(new Term(IndexArgs.ID, docid));
       TopDocs rs = searcher.search(q, 1);
       rfDocidSet.add(rs.scoreDocs[0].doc);
@@ -318,6 +320,12 @@ public class AxiomReranker<T> implements Reranker<T> {
       }
     }
 
+    // print fb documents 
+    String fbDocidString = "";
+    for (String docid : addedRfDocids){
+      fbDocidString += " " + docid;
+    }
+    LOG.info("expand " + context.getQueryId() + " with " + fbDocidString);
     return rfDocidSet;
   }
 
