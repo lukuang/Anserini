@@ -301,39 +301,26 @@ public class AxiomReranker<T> implements Reranker<T> {
     }
   }
 
-  private Set<Integer> readRfDocs(RerankerContext<T> context){
-    Set<Integer> rfDocidSet = new HashSet<>();;
-    String rfDocsJson = null;
-    String queryRfDocPath = this.rfDocPath + "/" + context.getQueryId() + ".json";
-    try {
-      rfDocsJson = new String(
-        Files.readAllBytes(
-          Paths.get(queryRfDocPath)
-        )
-      );
-    } catch (IOException e) {
-      LOG.error("Error parsing rf doc file at " + queryRfDocPath);
-    }
+  private Set<Integer> readRfDocs(RerankerContext<T> context) throws IOException{
+    Set<Integer> rfDocidSet = new HashSet<>();
+    String queryRfDocPath = this.rfDocPath + "/" + context.getQueryId();
+    List<String> rfExternalDocidCache = buildExternalDocidsCache(queryRfDocPath);
 
     IndexSearcher searcher = context.getIndexSearcher();
     IndexReader reader = searcher.getIndexReader();
 
-    try {
-      ObjectMapper mapper = new ObjectMapper();
-      JsonNode rfDocJsonNode = mapper.readerFor(JsonNode.class).readTree(rfDocsJson);
-      Iterator<JsonNode> docidIterator = rfDocJsonNode.elements();
-      while (docidIterator.hasNext() && rfDocidSet.size() < this.R ) {
-        JsonNode node = docidIterator.next();
-        String docid = "\n" + node.asText();
-        Query q = new TermQuery(new Term(IndexArgs.ID, docid));
-        TopDocs rs = searcher.search(q, 1);
-        rfDocidSet.add(rs.scoreDocs[0].doc);
+    for (String docid : rfExternalDocidCache) {
+      Query q = new TermQuery(new Term(IndexArgs.ID, docid));
+      TopDocs rs = searcher.search(q, 1);
+      rfDocidSet.add(rs.scoreDocs[0].doc);
+      if (rfDocidSet.size() >= this.R){
+        break;
       }
-    } catch (IOException e) {
-      LOG.error("Error parsing file at " + queryRfDocPath + "\n" + e.getMessage());
     }
+
     return rfDocidSet;
   }
+
   /**
    * Select {@code R*N} docs from the ranking results and the index as the reranking pool.
    * The process is:
@@ -346,9 +333,14 @@ public class AxiomReranker<T> implements Reranker<T> {
    */
   private Set<Integer> selectDocs(ScoredDocuments docs, RerankerContext<T> context)
     throws IOException {
-    Set<Integer> docidSet = new HashSet<>();
-    docidSet = new HashSet<>(Arrays.asList(ArrayUtils.toObject(
-      Arrays.copyOfRange(docs.ids, 0, Math.min(this.R, docs.ids.length)))));
+    Set<Integer> docidSet = null;
+    if (this.rfDocPath == null){
+      docidSet = new HashSet<>(Arrays.asList(ArrayUtils.toObject(
+        Arrays.copyOfRange(docs.ids, 0, Math.min(this.R, docs.ids.length)))));
+    } else {
+      docidSet = readRfDocs(context);
+    }
+
     long targetSize = this.R * this.N;
 
     if (docidSet.size() < targetSize) {
