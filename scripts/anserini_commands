@@ -5,21 +5,21 @@ sh target/appassembler/bin/IndexCollection \
   -index /m/infochain/lukuang/shared_for_round2/anserini/index/title+abstract \
   -storePositions -storeDocvectors -storeContents -storeRaw > log.covid-2020-05-10.title+abstract.txt
 
-#get initial retrieval results with the best parameters for round1
+
+#get initial PRF retrieval results with the best parameters for round1
 target/appassembler/bin/SearchCollection -index index/title+abstract \
  -topicreader Covid -topics src/main/resources/topics-and-qrels/topics.covid-round2-udel.xml \
  -topicfield query -f2exp -f2exp.s 0.8 -axiom -axiom.deterministic -axiom.top 10 -axiom.beta 0.7 \
  -axiom.outputQuery -hits 1400 -output runs/initial_results > logs/run.initial.log
 
+
 # evaluate based on round1 qrels
  eval/trec_eval.9.0.4/trec_eval -m ndcg_cut.10 src/main/resources/topics-and-qrels/qrels.covid-round1.txt runs/initial_results
 
 
-# generate rf result NOTE THAT WE USE ROUND 1 QUERY HERE:
-target/appassembler/bin/SearchCollection -index index/title+abstract \
+# generate initial rf run with all relevant documents using best beta and s, NOTE THAT WE USE ROUND 1 QUERY HERE:
+ target/appassembler/bin/SearchCollection -index index/title+abstract  \
  -topicreader Covid -topics src/main/resources/topics-and-qrels/topics.covid-round1-udel.xml \
- -topicfield query -f2exp -f2exp.s 0.8 -axiom -axiom.deterministic -axiom.top 10 -axiom.beta 0.7 \
- -axiom.rf_doc_path rel_docids \
- -axiom.outputQuery -hits 1400 -output runs/rf_results > logs/run.rf.log
-
-
+ -topicfield query -f2exp -f2exp.s 0.4 -axiom -axiom.deterministic -axiom.top 10 -axiom.beta 1.1 \
+-axiom.rf_doc_path most_rel_docids_20 -axiom.outputQuery \
+-hits 1400 -output runs/most_rel_doc_20_rf > logs/run.most_rel_doc_20_rf.log
