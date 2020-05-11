@@ -31,3 +31,9 @@ python scripts/get_most_rel_docids.py src/main/resources/topics-and-qrels/qrels.
 
 # remove judged documents from rf results
  python scripts/remove_judged.py --qrels src/main/resources/topics-and-qrels/qrels.covid-round1.txt --input runs/most_rel_doc_20_rf --output runs/most_rel_doc_20_rf_for_rerank
+
+ # merge RF results for round 1 queries with PRF results for round 2 queries
+ python scripts/merge_results.py --round1_input  runs/most_rel_doc_20_rf_for_rerank  --round2_input  runs/initial_results_for_rerank --runtag udel_fang_feedback --output runs/udel_fang_feedback
+
+ # sanity check the generated run
+ perl  scripts/check_run.pl runs/udel_fang_feedback
